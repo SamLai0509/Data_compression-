@@ -179,7 +179,8 @@ def evaluate_baseline_sz3(sz, data, eb_mode, absolute_error_bound, relative_erro
 
 def evaluate_neurlz(compressor, data, eb_mode, absolute_error_bound, relative_error_bound, pwr_error_bound,
                     online_epochs=50, learning_rate=1e-3, model_channels=4, model='tiny_residual_predictor', 
-                    num_res_blocks=1, spatial_dims=3, slice_order='zxy', val_split=0.1, track_losses=True, evaluate_per_slice=True):
+                    num_res_blocks=1, spatial_dims=3, slice_order='zxy', val_split=0.1, track_losses=True, 
+                    evaluate_per_slice=True, enable_post_process=True):
     """Evaluate NeurLZ compression."""
     print(f"\n{'─'*70}")
     print(f"NeurLZ: SZ3 + Online DNN Enhancement")
@@ -197,7 +198,7 @@ def evaluate_neurlz(compressor, data, eb_mode, absolute_error_bound, relative_er
     
     # Decompress
     decompress_start = time.time()
-    reconstructed = compressor.decompress(package, verbose=True)
+    reconstructed = compressor.decompress(package, verbose=True, enable_post_process=enable_post_process)
     decompress_time = time.time() - decompress_start
     
     # --- Compute Metrics ---
@@ -310,7 +311,8 @@ def main():
                        help='Evaluate reconstruction quality per slice')
     # parser.add_argument('--no_evaluate_per_slice', dest='evaluate_per_slice', action='store_false',
     #                    help='Disable per-slice evaluation')
-    # 在第309行附近（evaluate_per_slice参数之后）添加：
+    parser.add_argument('--enable_post_process', action='store_true', default=True,
+                       help='Enable post-process')
     parser.add_argument('--num_runs', type=int, default=1,
                     help='Number of runs for statistical evaluation (default: 1)')
     args = parser.parse_args()
@@ -344,6 +346,7 @@ def main():
     print(f"Track losses: {args.track_losses}")
     print(f"Number of residual blocks: {args.num_res_blocks}")
     print(f"Evaluate per slice: {args.evaluate_per_slice}")
+    print(f"Enable post-process: {args.enable_post_process}")
     print(f"{'='*70}")
     
     # Initialize
@@ -405,6 +408,7 @@ def main():
                     val_split=args.val_split,
                     track_losses=args.track_losses,
                     evaluate_per_slice=args.evaluate_per_slice,
+                    enable_post_process=args.enable_post_process,
                 )
                 neurlz_runs.append(neurlz)
 

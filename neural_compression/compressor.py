@@ -927,7 +927,7 @@ class NeurLZCompressor:
         # ================================================================
         # STEP 4: Error-Bounded Post-Processing (Optional)
         # ================================================================
-        if enable_post_process:  # 添加一个开关参数
+        if enable_post_process:
             if verbose:
                 print(f"\nStep 4: Applying error-bounded post-processing...")
                 
