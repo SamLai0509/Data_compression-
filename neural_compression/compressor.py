@@ -124,7 +124,9 @@ class NeurLZCompressor:
                 online_epochs=50, learning_rate=1e-3, model='tiny_residual_predictor', num_res_blocks=1,
                 model_channels=4, verbose=True, 
                 spatial_dims=3, slice_order='zxy',
-                val_split=0.1, track_losses=True):
+                val_split=0.1, track_losses=True,
+                Patch_size=256,
+                ):
         """
         NeurLZ compression pipeline.
         
@@ -435,7 +437,7 @@ class NeurLZCompressor:
         train_dataset, val_dataset = create_hybrid_datasets(
             x_data=x_prime_norm,
             y_data=residuals_norm,
-            patch_size=32,
+            patch_size=Patch_size,
             overlap=16,
             spatial_dims=spatial_dims,
             val_split=val_split,
@@ -443,7 +445,7 @@ class NeurLZCompressor:
         )
             
         if verbose:
-            print(f"  {get_dataset_info(train_dataset, val_dataset, 32, spatial_dims)}")
+            print(f"  {get_dataset_info(train_dataset, val_dataset, Patch_size, spatial_dims)}")
 
         train_loader = PatchDataLoader(
             train_dataset, 
@@ -730,8 +732,7 @@ class NeurLZCompressor:
         # Compute effective error bound
         if relative_error_bound > 0:
             data_range = np.max(x_prime) - np.min(x_prime)
-            effective_bound = min(absolute_error_bound, 
-                                relative_error_bound * data_range)
+            effective_bound = relative_error_bound * data_range
         else:
             effective_bound = absolute_error_bound
         

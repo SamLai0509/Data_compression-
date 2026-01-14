@@ -113,11 +113,12 @@ ERROR_PWR_BOUNDS="0"
 # NeurLZ modes
 EB_MODES="1"
 MODEL="tiny_frequency_residual_predictor_7_inputs"
+PATCH_SIZE=256
 
 # Online training parameters
 ONLINE_EPOCHS=100
 LEARNING_RATE=1e-3
-MODEL_CHANNELS=2 # 2 channels → ~3k params (as in paper)
+MODEL_CHANNELS=4 # 2 channels → ~3k params (as in paper)
 NUM_RES_BLOCKS=2
 # Device
 DEVICE="cuda"
@@ -128,7 +129,7 @@ VAL_SPLIT=0.1
 # TRACK_LOSSES is a boolean flag, no value needed (--track_losses enables it)
 TRACK_LOSSES=true  # set to "true" or "false"
 
-NUM_RUNS=10 
+NUM_RUNS=5
 mkdir -p $OUTPUT_DIR
 
 echo ""
@@ -149,12 +150,19 @@ echo "  Track losses: $TRACK_LOSSES"
 echo "  GPU mode: $GPU_MODE"
 echo "  Number of runs: $NUM_RUNS"
 echo "  Enable post-process: $ENABLE_POST_PROCESS"
+echo "  Patch size: $PATCH_SIZE"
 echo ""
 
 # Build track_losses flag (store_true args don't take values)
 TRACK_LOSSES_FLAG=""
 if [ "$TRACK_LOSSES" = "true" ]; then
     TRACK_LOSSES_FLAG="--track_losses"
+fi
+
+# Build enable_post_process flag (store_true args don't take values)
+ENABLE_POST_PROCESS_FLAG=""
+if [ "$ENABLE_POST_PROCESS" = "true" ]; then
+    ENABLE_POST_PROCESS_FLAG="--enable_post_process"
 fi
 
 python evaluate_neurlz_correct.py \
@@ -177,4 +185,5 @@ python evaluate_neurlz_correct.py \
     --val_split $VAL_SPLIT \
     --num_runs $NUM_RUNS \
     $TRACK_LOSSES_FLAG \
-    --enable_post_process $ENABLE_POST_PROCESS
+    $ENABLE_POST_PROCESS_FLAG \
+    --Patch_size $PATCH_SIZE
