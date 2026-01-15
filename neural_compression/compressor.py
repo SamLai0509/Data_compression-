@@ -714,23 +714,39 @@ class NeurLZCompressor:
     def _error_bounded_post_process(self, x_enhanced, x_prime, absolute_error_bound, 
                                     relative_error_bound=0.0, verbose=False, a=0.5, block_size=256):
         """
-        Error-bounded adaptive post-processing.
+        Error-bounded post-processing using quadratic Bezier curve smoothing at block boundaries.
         
-        This function applies post-processing to improve quality while ensuring
-        the error bound is not violated. Since we don't have original data during
-        decompression, we use a conservative approach:
-        1. Clip the enhancement to ensure |x_enhanced - x_prime| <= error_bound
-        2. Apply smoothing to reduce artifacts while respecting the bound
+        This function applies post-processing to improve quality at block boundaries (where
+        compression artifacts are most visible) while ensuring the error bound is not violated.
+        The method leverages neighboring points across block boundaries to smooth transitions
+        using a quadratic Bezier curve interpolation.
+        
+        Algorithm:
+            1. For each block boundary point d4 along the x-direction:
+            - d3: Left block inner point (i-1)
+            - d4: Boundary point (i) - the point to be improved
+            - d5: Right block inner point (i+1)
+            
+            2. Construct quadratic Bezier curve: B(t) = (1-t)^2*d3 + 2(1-t)t*d4 + t^2*d5
+            
+            3. Evaluate at t=0.5: B(0.5) = 0.25*d3 + 0.5*d4 + 0.25*d5
+            
+            4. Clamp the result to ensure error bound compliance:
+            d' = max(min(B(0.5), d4 + a*eb), d4 - a*eb)
+            where eb is the effective error bound and a controls the allowed deviation.
         
         Args:
-            x_enhanced: Enhanced reconstruction (x_prime + predicted_residuals)
+            x_enhanced: Enhanced reconstruction (x_prime + predicted_residuals from DNN)
             x_prime: SZ3 base reconstruction
             absolute_error_bound: Absolute error bound
-            relative_error_bound: Relative error bound (optional)
-            verbose: Print progress
+            relative_error_bound: Relative error bound (optional, used if > 0)
+            verbose: Print progress information
+            a: Tolerance factor (0 ≤ a ≤ 1) controlling how much deviation from d4 is allowed.
+            Larger values allow more smoothing but may violate error bounds.
+            block_size: Size of compression blocks (default: 256, matching patch size)
         
         Returns:
-            x_post: Post-processed reconstruction
+            x_post: Post-processed reconstruction with smoothed block boundaries
         """
         if relative_error_bound > 0:
             data_range = np.max(x_prime) - np.min(x_prime)
